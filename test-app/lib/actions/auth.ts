@@ -40,13 +40,15 @@ export async function signup(prevState: any, formData: FormData) {
   redirect('/dashboard')
 }
 
-export async function logout() {
+export async function logout(formData: FormData) {
   const supabase = await createClient()
 
   const { error } = await supabase.auth.signOut()
 
   if (error) {
-    return { error: error.message }
+    console.error('Logout error:', error)
+    // Can't return error since form action expects void
+    // Error is logged, user will see redirect anyway
   }
 
   revalidatePath('/', 'layout')

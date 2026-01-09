@@ -61,64 +61,68 @@ export async function updateAvatar(
   prevState: ProfileFormState | null,
   formData: FormData
 ): Promise<ProfileFormState> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  // Get authenticated user
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Not authenticated' }
+    // Get authenticated user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { error: 'Not authenticated' }
+    }
+
+    // Extract file
+    const file = formData.get('avatar') as File
+    if (!file || file.size === 0) {
+      return { error: 'No file selected' }
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      return { error: 'Only JPG, PNG, GIF, and WebP files are allowed' }
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return { error: 'File must be under 5MB' }
+    }
+
+    // Generate filename with folder structure for RLS
+    // Format: {userId}/avatar.{extension}
+    const extension = file.name.split('.').pop() || 'jpg'
+    const filename = `${user.id}/avatar.${extension}`
+
+    // Upload to storage
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filename, file, {
+        upsert: true,
+        contentType: file.type,
+      })
+
+    if (uploadError) {
+      return { error: 'Failed to upload avatar' }
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filename)
+
+    // Update database
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('id', user.id)
+
+    if (updateError) {
+      return { error: 'Failed to update profile' }
+    }
+
+    revalidatePath('/profile')
+    return { success: 'Avatar updated successfully!' }
+
+  } catch (error) {
+    return { error: 'An unexpected error occurred' }
   }
-
-  // Extract file
-  const file = formData.get('avatar') as File
-  if (!file || file.size === 0) {
-    return { error: 'No file selected' }
-  }
-
-  // Validate file type
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-  if (!allowedTypes.includes(file.type)) {
-    return { error: 'Only JPG, PNG, GIF, and WebP files are allowed' }
-  }
-
-  // Validate file size (5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    return { error: 'File must be under 5MB' }
-  }
-
-  // Generate filename with extension
-  const extension = file.name.split('.').pop()
-  const filename = `${user.id}.${extension}`
-
-  // Upload to storage
-  const { error: uploadError } = await supabase.storage
-    .from('avatars')
-    .upload(filename, file, {
-      upsert: true,
-      contentType: file.type,
-    })
-
-  if (uploadError) {
-    console.error('Upload error:', uploadError)
-    return { error: 'Failed to upload avatar' }
-  }
-
-  // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from('avatars')
-    .getPublicUrl(filename)
-
-  // Update database
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ avatar_url: publicUrl })
-    .eq('id', user.id)
-
-  if (updateError) {
-    console.error('Error updating avatar_url:', updateError)
-    return { error: 'Failed to update profile' }
-  }
-
-  revalidatePath('/profile')
-  return { success: 'Avatar updated successfully!' }
 }

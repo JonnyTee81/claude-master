@@ -106,7 +106,6 @@ export default function AvatarUpload({
       // Notify parent
       onFileSelect(resizedFile)
     } catch (err) {
-      console.error('Error processing image:', err)
       // Fallback to original file
       onFileSelect(file)
 
@@ -162,6 +161,7 @@ export default function AvatarUpload({
       <input
         ref={fileInputRef}
         type="file"
+        name="avatar"
         accept="image/jpeg,image/png,image/gif,image/webp"
         onChange={handleFileChange}
         className="hidden"

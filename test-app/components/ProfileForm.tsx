@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, startTransition } from 'react'
 import { useActionState } from 'react'
 import { updateProfile, updateAvatar } from '@/lib/actions/profile'
 import type { Profile } from '@/lib/types/profile'
@@ -16,14 +16,19 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
-  const handleAvatarSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file)
+  }
+
+  const handleAvatarUpload = () => {
     if (!selectedFile) return
 
     const formData = new FormData()
     formData.append('avatar', selectedFile)
 
-    avatarAction(formData)
+    startTransition(() => {
+      avatarAction(formData)
+    })
   }
 
   return (
@@ -31,19 +36,20 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           {/* Avatar Upload Section */}
-          <form onSubmit={handleAvatarSubmit}>
-            <div className="flex flex-col items-center mb-8">
+          <div className="mb-8">
+            <div className="flex flex-col items-center">
               <AvatarUpload
                 currentSrc={profile.avatar_url}
                 name={profile.full_name}
                 email={profile.email}
-                onFileSelect={setSelectedFile}
+                onFileSelect={handleFileSelect}
                 error={avatarState?.error}
               />
 
               {selectedFile && (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleAvatarUpload}
                   disabled={avatarPending}
                   className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -59,7 +65,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                 </div>
               )}
             </div>
-          </form>
+          </div>
 
           {/* Divider */}
           <div className="relative mb-8">
