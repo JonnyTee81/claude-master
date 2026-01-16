@@ -42,9 +42,10 @@ When the same MCP is configured at multiple levels:
 
 Based on `.claude/settings.local.json`, the following MCPs are currently enabled for this project:
 
-1. **Brave Search** - Web search capabilities
-2. **GitHub** - GitHub repository and workflow management
-3. **Supabase** - Database and backend services integration
+1. **GitHub** - GitHub repository and workflow management
+2. **Supabase** - Database and backend services integration
+
+**Note:** Web search capabilities are available through Claude's built-in `WebSearch` tool (no separate MCP needed).
 
 ### User-Level MCPs
 
@@ -125,7 +126,9 @@ For implementation details, see `~/.claude/mcp-servers/README.md`
 
 ## When to Use Each MCP
 
-### Brave Search MCP
+### Built-in Web Search
+
+Claude has built-in web search capabilities through the `WebSearch` tool - no separate MCP needed.
 
 **Use cases:**
 - Research best practices and design patterns
@@ -143,7 +146,7 @@ For implementation details, see `~/.claude/mcp-servers/README.md`
 "Research accessible form validation patterns"
 ```
 
-**Available via:** `WebSearch` tool
+**Available via:** Built-in `WebSearch` tool (always available)
 
 ### GitHub MCP
 
@@ -244,14 +247,14 @@ All specialized subagents have access to the same MCP tools:
 ### Explore Agent
 Can use MCPs to:
 - Search external repositories for patterns (`GitHub MCP`)
-- Research architectural decisions (`Brave Search MCP`)
+- Research architectural decisions (`WebSearch`)
 - Find similar implementations (`GitHub MCP` code search)
 - Search for files across multiple projects (`Filesystem MCP`)
 - Locate configuration files and patterns (`Filesystem MCP`)
 
 ### Plan Agent
 Can use MCPs to:
-- Research best practices before planning (`Brave Search MCP`)
+- Research best practices before planning (`WebSearch`)
 - Review existing implementations in other repos (`GitHub MCP`)
 - Check database schema requirements (`Supabase MCP`)
 - Analyze file structures across projects (`Filesystem MCP`)
@@ -259,14 +262,14 @@ Can use MCPs to:
 
 ### Test Writer Agent
 Can use MCPs to:
-- Find testing patterns and examples (`Brave Search MCP`, `GitHub MCP`)
-- Research testing library documentation (`Brave Search MCP`)
+- Find testing patterns and examples (`WebSearch`, `GitHub MCP`)
+- Research testing library documentation (`WebSearch`)
 - Locate existing test files for reference (`Filesystem MCP`)
 - Search for test fixtures and utilities (`Filesystem MCP`)
 
 ### Database Architect Agent
 Can use MCPs to:
-- Research database design patterns (`Brave Search MCP`)
+- Research database design patterns (`WebSearch`)
 - Review RLS policy examples (`GitHub MCP`)
 - Validate schema designs (`Supabase MCP`)
 - Find migration files across projects (`Filesystem MCP`)
@@ -274,7 +277,7 @@ Can use MCPs to:
 
 ### Design Explorer Agent
 Can use MCPs to:
-- Research UI/UX trends and patterns (`Brave Search MCP`)
+- Research UI/UX trends and patterns (`WebSearch`)
 - Find design system examples (`GitHub MCP`)
 - Review component library implementations (`GitHub MCP`)
 - Search for design tokens and theme files (`Filesystem MCP`)
@@ -285,7 +288,7 @@ Can use MCPs to:
 ### Example 1: Feature Development Workflow
 
 ```markdown
-1. Research phase (Brave Search MCP)
+1. Research phase (WebSearch)
    - Find best practices for the feature
    - Check latest framework documentation
    - Review security considerations
@@ -307,7 +310,7 @@ Can use MCPs to:
 ### Example 2: Database Design Workflow
 
 ```markdown
-1. Research phase (Brave Search MCP)
+1. Research phase (WebSearch)
    - Find RLS best practices
    - Review indexing strategies
    - Check performance patterns
@@ -330,7 +333,7 @@ Can use MCPs to:
    - Check open/closed issues
    - Search codebase for error patterns
 
-2. Research solutions (Brave Search MCP)
+2. Research solutions (WebSearch)
    - Find documentation on the error
    - Check if it's a known framework bug
    - Look for workarounds
@@ -352,7 +355,7 @@ Can use MCPs to:
    - Verify CI/CD status is green
    - Review recent commits
 
-2. Documentation check (Brave Search MCP)
+2. Documentation check (WebSearch)
    - Verify framework version compatibility
    - Check for breaking changes
    - Review deployment best practices
@@ -369,7 +372,7 @@ Can use MCPs to:
    - Locate all instances of a specific component
    - Identify common configuration patterns
 
-2. Research best implementation (Brave Search MCP + GitHub MCP)
+2. Research best implementation (WebSearch + GitHub MCP)
    - Find current best practices
    - Review reference implementations
    - Check for security considerations
@@ -652,7 +655,7 @@ MCPs should handle external service interactions. Use standard tools (Read, Edit
 ### 4. Chain MCPs with Standard Tools
 
 ```markdown
-1. Research with Brave Search MCP → Get best practices
+1. Research with WebSearch → Get best practices
 2. Find examples with GitHub MCP → See implementations
 3. Implement with Edit/Write → Apply learnings
 4. Create PR with GitHub MCP → Share changes
@@ -662,11 +665,11 @@ MCPs should handle external service interactions. Use standard tools (Read, Edit
 
 Don't manually gather information if a subagent can use MCPs to do research autonomously. Trust them to leverage MCPs effectively.
 
-### 6. Combine MCPs
+### 6. Combine Tools and MCPs
 
-Use multiple MCPs together:
+Use multiple tools and MCPs together:
 - Search GitHub for examples (GitHub MCP)
-- Research the pattern (Brave Search MCP)
+- Research the pattern (WebSearch)
 - Implement in your database (Supabase MCP)
 - Find similar patterns in other projects (Filesystem MCP)
 
@@ -762,8 +765,9 @@ If an MCP isn't behaving as expected:
 
 MCPs often have rate limits:
 - **GitHub**: 5,000 requests/hour (authenticated), 60/hour (unauthenticated)
-- **Brave Search**: Varies by plan
+- **Supabase**: Varies by plan tier
 - **Filesystem**: No rate limits, but may have performance limits
+- **WebSearch**: Built-in, managed by Claude
 
 **Best practices:**
 - Cache results when possible
@@ -803,19 +807,21 @@ Current project configuration:
 ```json
 {
   "enabledMcpjsonServers": [
-    "brave-search",
     "github",
     "supabase"
   ],
   "enableAllProjectMcpServers": true,
   "permissions": {
     "allow": [
+      "WebSearch",
       "mcp__github__search_repositories",
       // ... other permissions
     ]
   }
 }
 ```
+
+**Note:** WebSearch is a built-in tool (not an MCP), enabled via permissions.
 
 ### User-Level Configuration (`~/.claude.json`)
 
@@ -955,12 +961,14 @@ MCPs transform Claude Code into a connected development environment with three c
 
 ### Installed MCPs
 
-**Project-Level:**
-- **Brave Search** - Keeps you informed with current information and best practices
+**Built-in Tools:**
+- **WebSearch** - Built-in web search for research, documentation, and best practices
+
+**Project-Level MCPs:**
 - **GitHub** - Integrates your workflow with version control and repository management
 - **Supabase** - Streamlines database operations and schema management
 
-**User-Level (Recommended):**
+**User-Level MCPs (Recommended):**
 - **Filesystem** - Enhanced file operations across multiple projects
 
 **Custom MCPs (User-Level):**
